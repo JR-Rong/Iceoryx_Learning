@@ -1,0 +1,116 @@
+# Copyright (c) 2019 - 2021 by Robert Bosch GmbH. All rights reserved.
+# Copyright (c) 2020 - 2022 by Apex.AI Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+cmake_minimum_required(VERSION 3.16)
+
+set(IOX_VERSION_STRING "2.90.0")
+
+project(iceoryx_hoofs VERSION ${IOX_VERSION_STRING})
+
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/IceoryxPackageHelper.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmake/IceoryxPlatform.cmake")
+
+if(CMAKE_SYSTEM_NAME MATCHES Linux OR CMAKE_SYSTEM_NAME MATCHES Darwin)
+    option(BUILD_SHARED_LIBS "Create shared libraries by default" ON)
+endif()
+
+iox_make_unique_includedir()
+add_subdirectory(platform)
+
+#
+########## build iceoryx hoofs lib ##########
+#
+
+iox_add_library(
+    TARGET                      iceoryx_hoofs
+    NAMESPACE                   iceoryx_hoofs
+    ADDITIONAL_EXPORT_TARGETS   iceoryx_platform
+    PROJECT_PREFIX              ${PREFIX}
+    PUBLIC_LIBS                 iceoryx_hoofs::iceoryx_platform
+    PRIVATE_LIBS                ${ICEORYX_SANITIZER_FLAGS}
+    PRIVATE_LIBS_LINUX          acl atomic ${CODE_COVERAGE_LIBS}
+    BUILD_INTERFACE             ${PROJECT_SOURCE_DIR}/include
+    INSTALL_INTERFACE           include/${PREFIX}
+    FILES
+        source/concurrent/active_object.cpp
+        source/concurrent/loffli.cpp
+        source/cxx/adaptive_wait.cpp
+        source/cxx/deadline_timer.cpp
+        source/cxx/filesystem.cpp
+        source/cxx/helplets.cpp
+        source/cxx/requires.cpp
+        source/cxx/unique_id.cpp
+        source/error_handling/error_handler.cpp
+        source/error_handling/error_handling.cpp
+        source/file_reader/file_reader.cpp
+        source/log/hoofs_logging.cpp
+        source/log/logcommon.cpp
+        source/log/logger.cpp
+        source/log/logging_internal.cpp
+        source/log/logging.cpp
+        source/log/logmanager.cpp
+        source/log/logstream.cpp
+        source/posix_wrapper/access_control.cpp
+        source/posix_wrapper/file_lock.cpp
+        source/posix_wrapper/message_queue.cpp
+        source/posix_wrapper/mutex.cpp
+        source/posix_wrapper/named_pipe.cpp
+        source/posix_wrapper/named_semaphore.cpp
+        source/posix_wrapper/posix_access_rights.cpp
+        source/posix_wrapper/semaphore.cpp
+        source/posix_wrapper/semaphore_interface.cpp
+        source/posix_wrapper/shared_memory_object.cpp
+        source/posix_wrapper/shared_memory_object/allocator.cpp
+        source/posix_wrapper/shared_memory_object/memory_map.cpp
+        source/posix_wrapper/shared_memory_object/shared_memory.cpp
+        source/posix_wrapper/signal_handler.cpp
+        source/posix_wrapper/signal_watcher.cpp
+        source/posix_wrapper/system_configuration.cpp
+        source/posix_wrapper/thread.cpp
+        source/posix_wrapper/types.cpp
+        source/posix_wrapper/unnamed_semaphore.cpp
+        source/posix_wrapper/unix_domain_socket.cpp
+        source/relocatable_pointer/base_relative_pointer.cpp
+        source/relocatable_pointer/relative_pointer_data.cpp
+        source/units/duration.cpp
+)
+
+#
+########## hoofs testing ##########
+#
+
+# Finding gtest and adding the subdirectories is split to support the use case of
+# building the testing lib without the tests by providing gtest externally
+if(NOT GTest_FOUND AND BUILD_TEST)
+    find_package(GTest CONFIG REQUIRED)
+endif()
+
+if(GTest_FOUND)
+    message(STATUS "GTest was found, building iceoryx_hoofs_testing enabled.")
+    add_subdirectory(testing)
+    if(BUILD_TEST)
+        add_subdirectory(test)
+    endif()
+endif()
+
+install(
+    FILES
+        cmake/IceoryxPackageHelper.cmake
+        cmake/IceoryxPlatform.cmake
+        cmake/IceoryxVersion.cmake
+    DESTINATION ${DESTINATION_CONFIGDIR}
+)

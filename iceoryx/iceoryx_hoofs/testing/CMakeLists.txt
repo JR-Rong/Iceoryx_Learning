@@ -1,0 +1,45 @@
+# Copyright (c) 2019 - 2021 by Robert Bosch GmbH. All rights reserved.
+# Copyright (c) 2020 - 2022 by Apex.AI Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+########## set hoofs internal target, needed by tests in components ##########
+#
+# TODO: we need something like internal public for internal build dependencies
+# instead of making the whole source folder public for internal dependency resolution
+
+iox_add_library(
+    STATIC
+    TARGET                  ${PROJECT_NAME}_testing
+    NAMESPACE               iceoryx_hoofs_testing
+    PROJECT_PREFIX          ${PREFIX}
+    PUBLIC_LIBS             GTest::gtest
+                            GTest::gmock
+    PRIVATE_LIBS            ${CODE_COVERAGE_LIBS}
+                            iceoryx_hoofs
+                            ${CMAKE_DL_LIBS}
+    PRIVATE_LIBS_LINUX      rt
+    BUILD_INTERFACE         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    INSTALL_INTERFACE       include/${PREFIX}
+    FILES
+        mocks/time_mock.cpp
+        mocks/error_handler_mock.cpp
+        timing_test.cpp
+        compile_test.cpp
+)
+
+if(TEST_WITH_ADDITIONAL_USER)
+    target_compile_definitions(iceoryx_hoofs_testing PUBLIC -DTEST_WITH_ADDITIONAL_USER)
+endif(TEST_WITH_ADDITIONAL_USER)
